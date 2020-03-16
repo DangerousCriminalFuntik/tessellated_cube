@@ -64,25 +64,25 @@ GLuint createProgram(const std::vector<GLuint>& shaders);
 int main()
 {    
 	if (!glfwInit())
-        return -1;
+		return -1;
 
 	glfwSetErrorCallback(error_callback);
         
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    GLFWwindow* window = glfwCreateWindow(1280, 720, title.c_str(), nullptr, nullptr);
-    if (!window)
-    {
-        std::cout << "Failed to create GLFW window\n";
-        glfwTerminate();
-        return -1;
-    }
+	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+	GLFWwindow* window = glfwCreateWindow(1280, 720, title.c_str(), nullptr, nullptr);
+	if (!window)
+	{
+		std::cout << "Failed to create GLFW window\n";
+		glfwTerminate();
+		return -1;
+	}
 
-    glfwMakeContextCurrent(window);
+	glfwMakeContextCurrent(window);
     
-    // Set the required callback functions
+	// Set the required callback functions
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetCursorPosCallback(window, cursor_position_callback);
@@ -93,31 +93,31 @@ int main()
 	{
 		std::cout << "GLEW Error: " << glewGetErrorString(error) << '\n';
 		return -1;
-    }
+	}
 	glGetError();
-    
-    int width, height;
+
+	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
-    glViewport(0, 0, width, height);
+	glViewport(0, 0, width, height);
 	    
-	auto vs  = createShader("shaders/cube.vert", GL_VERTEX_SHADER);
+	auto vs = createShader("shaders/cube.vert", GL_VERTEX_SHADER);
 	auto tcs = createShader("shaders/cube.cont", GL_TESS_CONTROL_SHADER);
 	auto tes = createShader("shaders/cube.eval", GL_TESS_EVALUATION_SHADER);
-	auto fs  = createShader("shaders/cube.frag", GL_FRAGMENT_SHADER);
+	auto fs = createShader("shaders/cube.frag", GL_FRAGMENT_SHADER);
 	auto program = createProgram({ vs, tcs, tes, fs });
-	
+
 	GLuint pipeline = 0;
 	glCreateProgramPipelines(1, &pipeline);
 	glUseProgramStages(pipeline, GL_VERTEX_SHADER_BIT | GL_TESS_CONTROL_SHADER_BIT | GL_TESS_EVALUATION_SHADER_BIT | GL_FRAGMENT_SHADER_BIT, program);
-    
+
 	static const std::vector<Vertex> vertices = {
 		Vertex{ glm::vec4(-1.0f,-1.0f,-1.0f, 1.0f) },
-		Vertex{ glm::vec4( 1.0f,-1.0f,-1.0f, 1.0f) },
-		Vertex{ glm::vec4( 1.0f, 1.0f,-1.0f, 1.0f) },
+		Vertex{ glm::vec4(1.0f,-1.0f,-1.0f, 1.0f) },
+		Vertex{ glm::vec4(1.0f, 1.0f,-1.0f, 1.0f) },
 		Vertex{ glm::vec4(-1.0f, 1.0f,-1.0f, 1.0f) },
 		Vertex{ glm::vec4(-1.0f,-1.0f, 1.0f, 1.0f) },
-		Vertex{ glm::vec4( 1.0f,-1.0f, 1.0f, 1.0f) },
-		Vertex{ glm::vec4( 1.0f, 1.0f, 1.0f, 1.0f) },
+		Vertex{ glm::vec4(1.0f,-1.0f, 1.0f, 1.0f) },
+		Vertex{ glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) },
 		Vertex{ glm::vec4(-1.0f, 1.0f, 1.0f, 1.0f) }
 	};
 
@@ -130,7 +130,7 @@ int main()
 		0, 1, 2, 3
 	};
 
-	GLint alignment = GL_NONE;
+	GLint alignment = 0;
 	glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);
 	GLint blockSize = glm::max(GLint(sizeof(Transform)), alignment);
 
@@ -139,8 +139,8 @@ int main()
 	glNamedBufferStorage(buffers[buffer::VERTEX], vertices.size() * sizeof(Vertex), vertices.data(), 0);
 	glNamedBufferStorage(buffers[buffer::ELEMENT], indices.size() * sizeof(GLushort), indices.data(), 0);
 	glNamedBufferStorage(buffers[buffer::TRANSFORM], blockSize, nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	
-	
+
+
 	GLuint vao = 0;
 	glCreateVertexArrays(1, &vao);
 
@@ -155,11 +155,11 @@ int main()
 	glDepthFunc(GL_LEQUAL);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
      
-    while (!glfwWindowShouldClose(window))
-    {
+	while (!glfwWindowShouldClose(window))
+	{
 		{
 			auto transform = static_cast<Transform*>(glMapNamedBufferRange(buffers[buffer::TRANSFORM],
-				0, sizeof(Transform), 
+				0, blockSize,
 				GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
 
 			auto aspectRatio = static_cast<float>(width) / static_cast<float>(height);
@@ -174,7 +174,7 @@ int main()
 			glUnmapNamedBuffer(buffers[buffer::TRANSFORM]);
 		}
 		
-        glClearBufferfv(GL_COLOR, 0, &glm::vec4(0.2f, 0.2f, 0.3f, 1.0f)[0]);
+		glClearBufferfv(GL_COLOR, 0, &glm::vec4(0.2f, 0.2f, 0.3f, 1.0f)[0]);
 		glClearBufferfv(GL_DEPTH, 0, &glm::vec4(1.0f)[0]);
                
 		glBindProgramPipeline(pipeline);
@@ -186,9 +186,9 @@ int main()
 
 		glDrawElementsInstancedBaseVertex(GL_PATCHES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_SHORT, nullptr, 1, 0);
 	
-        glfwSwapBuffers(window);
+		glfwSwapBuffers(window);
 		glfwPollEvents();
-    }
+	}
     
 	glDeleteProgramPipelines(1, &pipeline);
 	glDeleteProgram(program);
@@ -260,17 +260,17 @@ void scroll_callback(GLFWwindow* window, double x, double y)
 GLuint createShader(std::string_view filename, GLenum type)
 {
 	// read the file in lambda expression
-    auto source = [filename](){
-        std::string result;
-        std::ifstream stream(filename.data());
-        
+	auto source = [filename](){
+		std::string result;
+		std::ifstream stream(filename.data());
+
 		if (!stream.is_open()) {
 			std::string str{ filename };
 			std::cerr << "Could not open file: " << str << "\n";
 			return result;
 		}
-            
-        stream.seekg(0, std::ios::end);
+
+		stream.seekg(0, std::ios::end);
 		result.reserve((size_t)stream.tellg());
 		stream.seekg(0, std::ios::beg);
 
@@ -278,8 +278,8 @@ GLuint createShader(std::string_view filename, GLenum type)
 			std::istreambuf_iterator<char>{});
 
 		return result;
-    }();
-    auto pSource = source.c_str();
+	}();
+	auto pSource = source.c_str();
 
 	GLuint shader = glCreateShader(type);
 	glShaderSource(shader, 1, &pSource, nullptr);
